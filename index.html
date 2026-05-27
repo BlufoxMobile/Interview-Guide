@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Interview Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --xfinity-purple: #6138F5;
+    --xfinity-purple-light: #8B6FF7;
+    --xfinity-purple-mid: #7B5CF7;
+    --xfinity-purple-dark: #4A1FD9;
+    --xfinity-purple-deep: #3A12B0;
+    --xfinity-violet: #9747FF;
+    --xfinity-green: #008558;
+    --xfinity-amber: #FFAA00;
+    --xfinity-red: #E6004D;
+    --blufox-dark: #0B0818;
+    --blufox-card: #140F2A;
+    --blufox-card-hover: #1B1538;
+    --blufox-border: #2A1F4F;
+    --text-primary: #F0EEFF;
+    --text-secondary: #B0A8D0;
+    --text-muted: #7A6FA0;
+    --money-green: #00E676;
+    --input-bg: #0F0A24;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--blufox-dark);
+    color: var(--text-primary);
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse at top, rgba(97, 56, 245, 0.15), transparent 60%),
+      radial-gradient(ellipse at bottom, rgba(151, 71, 255, 0.08), transparent 60%),
+      var(--blufox-dark);
+    padding: 24px 16px 64px;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(97, 56, 245, 0.25), rgba(151, 71, 255, 0.15));
+    border: 1px solid rgba(139, 111, 247, 0.4);
+    color: var(--xfinity-purple-light);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    background: linear-gradient(135deg, #F0EEFF 0%, var(--xfinity-purple-light) 50%, var(--xfinity-violet) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .header p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+    max-width: 580px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Section / Accordion */
+  .section {
+    background: var(--blufox-card);
+    border: 1px solid var(--blufox-border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+  }
+  .section.open {
+    border-color: rgba(139, 111, 247, 0.5);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+  }
+  .section-header:hover {
+    background: var(--blufox-card-hover);
+  }
+  .section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--xfinity-purple), var(--xfinity-violet));
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .section-caret {
+    color: var(--xfinity-purple-light);
+    font-size: 14px;
+    transition: transform 0.25s ease;
+  }
+  .section.open .section-caret {
+    transform: rotate(180deg);
+  }
+  .section-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .section.open .section-body {
+    max-height: 5000px;
+  }
+  .section-body-inner {
+    padding: 4px 18px 18px;
+    border-top: 1px solid var(--blufox-border);
+    padding-top: 14px;
+  }
+
+  /* Form elements */
+  .field {
+    margin-bottom: 12px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 560px) {
+    .field-row { grid-template-columns: 1fr; }
+  }
+  label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    letter-spacing: 0.1px;
+  }
+  .helper {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .note-box {
+    background: rgba(97, 56, 245, 0.08);
+    border-left: 3px solid var(--xfinity-purple-light);
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+  .note-box strong { color: var(--text-primary); }
+  .note-box ul { margin: 6px 0 0; padding-left: 18px; }
+  .note-box li { margin-bottom: 2px; }
+  .note-box ol { margin: 6px 0 0; padding-left: 20px; }
+  .note-box ol li { margin-bottom: 8px; }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--blufox-border);
+    color: var(--text-primary);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  textarea {
+    min-height: 70px;
+    resize: vertical;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--xfinity-purple-light);
+    box-shadow: 0 0 0 3px rgba(139, 111, 247, 0.18);
+  }
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B6FF7' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  /* Radio / Checkbox button groups */
+  .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .button-group label {
+    flex: 1;
+    min-width: 100px;
+    margin: 0;
+    cursor: pointer;
+    background: var(--input-bg);
+    border: 1px solid var(--blufox-border);
+    color: var(--text-secondary);
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+  .button-group input[type="radio"],
+  .button-group input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .button-group label:hover {
+    border-color: rgba(139, 111, 247, 0.5);
+    color: var(--text-primary);
+  }
+  .button-group input:checked + .btn-text,
+  .button-group label.checked {
+    color: white;
+  }
+  .button-group label:has(input:checked) {
+    background: linear-gradient(135deg, rgba(97, 56, 245, 0.35), rgba(151, 71, 255, 0.25));
+    border-color: var(--xfinity-purple-light);
+    color: white;
+  }
+
+  /* File upload */
+  .file-drop {
+    background: var(--input-bg);
+    border: 2px dashed var(--blufox-border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .file-drop:hover, .file-drop.drag {
+    border-color: var(--xfinity-purple-light);
+    background: rgba(97, 56, 245, 0.05);
+  }
+  .file-drop input[type="file"] { display: none; }
+  .file-drop-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+  .file-drop-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .file-drop-text strong { color: var(--xfinity-purple-light); }
+  #file-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .file-row {
+    padding: 9px 12px;
+    background: rgba(0, 230, 118, 0.08);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--money-green);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .file-row-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .file-row button {
+    background: none;
+    border: none;
+    color: var(--xfinity-red);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+  .file-count-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    background: rgba(139, 111, 247, 0.15);
+    border: 1px solid rgba(139, 111, 247, 0.3);
+    border-radius: 999px;
+    color: var(--xfinity-purple-light);
+    font-size: 10.5px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Submit */
+  .submit-area {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .submit-btn {
+    background: linear-gradient(135deg, var(--xfinity-purple) 0%, var(--xfinity-violet) 100%);
+    color: white;
+    border: none;
+    padding: 14px 48px;
+    border-radius: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 20px rgba(97, 56, 245, 0.4);
+  }
+  .submit-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(97, 56, 245, 0.55);
+  }
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .status-msg {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    display: none;
+  }
+  .status-msg.show { display: block; }
+  .status-msg.success {
+    background: rgba(0, 230, 118, 0.1);
+    border: 1px solid rgba(0, 230, 118, 0.4);
+    color: var(--money-green);
+  }
+  .status-msg.error {
+    background: rgba(230, 0, 77, 0.1);
+    border: 1px solid rgba(230, 0, 77, 0.4);
+    color: var(--xfinity-red);
+  }
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Hidden auto-resolved fields, shown as small chips when populated */
+  .resolved-info {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(139, 111, 247, 0.08);
+    border-left: 3px solid var(--xfinity-purple-light);
+    border-radius: 4px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    display: none;
+    line-height: 1.55;
+  }
+  .resolved-info.show { display: block; }
+  .resolved-info code {
+    color: var(--xfinity-purple-light);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.4px;
+  }
+  .footer strong { color: var(--xfinity-purple-light); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-badge">🔥 Cook County Cooks — C³</div>
+    <h1>Interview Guide</h1>
+    <p>Complete this guide before hiring anyone in the market. The submission will be forwarded to the director, the DM, the store manager, and the hiring director.</p>
+  </div>
+
+  <form id="interview-form" autocomplete="off">
+
+    <!-- SECTION 1: Interview Basics -->
+    <div class="section open" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">1</span>
+        <span class="section-title">Interview Basics</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+
+          <!-- Date is captured silently in the background -->
+          <input type="hidden" id="date" name="date" />
+
+          <div class="field-row">
+            <div>
+              <label for="interviewer_name">Your Name</label>
+              <input type="text" id="interviewer_name" name="interviewer_name" placeholder="e.g. Jeff Bilbrey" />
+            </div>
+            <div>
+              <label for="interviewer_email">Your Email</label>
+              <input type="email" id="interviewer_email" name="interviewer_email" placeholder="you@blufoxmobile.com" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div>
+              <label for="candidate_first_name">Candidate First Name</label>
+              <input type="text" id="candidate_first_name" name="candidate_first_name" />
+            </div>
+            <div>
+              <label for="candidate_last_name">Candidate Last Name</label>
+              <input type="text" id="candidate_last_name" name="candidate_last_name" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="store">Store the candidate is interviewing for</label>
+            <select id="store" name="store">
+              <option value="">Loading stores…</option>
+            </select>
+            <div id="resolved-info" class="resolved-info"></div>
+          </div>
+
+          <!-- Hidden auto-populated fields -->
+          <input type="hidden" id="store_manager_name" name="store_manager_name" />
+          <input type="hidden" id="store_manager_email" name="store_manager_email" />
+          <input type="hidden" id="district_manager_email" name="district_manager_email" />
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Introduction To The Interview -->
+    <div class="section" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">2</span>
+        <span class="section-title">Introduction to the Interview</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+
+          <div class="note-box">
+            <strong>Script prompt:</strong> Blufox Mobile is a branded partner of Xfinity. We sell TV, Internet, Home Phone, Home Security, and Cell Phones. Started in Tomball, TX in 2017 — now the largest branded partner of Xfinity. We have ____ stores nationally and ____ stores in this region.
+          </div>
+
+          <div class="note-box">
+            <strong>Schedule expectation:</strong> Full-time, two shifts available (9:30 AM – 6 PM or 12 PM – 8:30 PM). Open availability required. Schedules posted one month out. Required in-person training Mon–Fri, 9:30 AM – 6 PM.
+          </div>
+
+          <div class="field">
+            <label>Does the candidate understand the schedule expectations?</label>
+            <select name="schedule_understanding">
+              <option value="">Select…</option>
+              <option>Fully understands and ready to proceed</option>
+              <option>Unsure — not certain they can proceed</option>
+              <option>Asking for special scheduling — cannot conform</option>
+            </select>
+          </div>
+
+          <div class="field-row">
+            <div>
+              <label>Previous wireless or retail sales experience?</label>
+              <div class="button-group">
+                <label><input type="radio" name="prior_experience" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="prior_experience" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+            <div>
+              <label>Reliable transportation to and from work?</label>
+              <div class="button-group">
+                <label><input type="radio" name="transportation" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="transportation" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div>
+              <label>Available to work weekends and evenings?</label>
+              <div class="button-group">
+                <label><input type="radio" name="weekend_availability" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="weekend_availability" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+            <div>
+              <label>At least 18 years of age?</label>
+              <div class="button-group">
+                <label><input type="radio" name="age_18_plus" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="age_18_plus" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div>
+              <label>Authorized to work in the United States?</label>
+              <div class="button-group">
+                <label><input type="radio" name="work_authorized" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="work_authorized" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+            <div>
+              <label>Comfortable with a background check &amp; drug test?</label>
+              <div class="button-group">
+                <label><input type="radio" name="background_check_ok" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="background_check_ok" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Bilingual? <span class="helper">(huge plus for our markets — note any languages spoken)</span></label>
+            <input type="text" name="languages_spoken" placeholder="e.g. English &amp; Spanish, or leave blank" />
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Motivation & Intent -->
+    <div class="section" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">3</span>
+        <span class="section-title">Motivation &amp; Intent</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+          <div class="note-box">
+            <strong>What you're looking for:</strong>
+            <ul>
+              <li>Are they commission-driven or comfort-driven?</li>
+              <li>Do they talk about growth, or just money?</li>
+              <li>Do they understand what retail sales actually is?</li>
+            </ul>
+            <em>Complete at least two fields.</em>
+          </div>
+
+          <div class="field">
+            <label>Why are you interested in this role specifically?</label>
+            <textarea name="motivation_role"></textarea>
+          </div>
+          <div class="field">
+            <label>What attracted you to BluFox / Xfinity retail?</label>
+            <textarea name="motivation_brand"></textarea>
+          </div>
+          <div class="field">
+            <label>What does success in this role look like to you after 6 months?</label>
+            <textarea name="motivation_success"></textarea>
+          </div>
+          <div class="field">
+            <label>What made you leave (or want to leave) your last job?</label>
+            <textarea name="motivation_last_job"></textarea>
+          </div>
+          <div class="field">
+            <label>Where do you see yourself professionally 1–2 years from now? <span class="helper">(helps gauge career intent vs. short-term job)</span></label>
+            <textarea name="motivation_long_term"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Sales Mindset & Coachability -->
+    <div class="section" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">4</span>
+        <span class="section-title">Sales Mindset &amp; Coachability</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+          <div class="note-box">
+            <strong>Goal:</strong> Prevent an ego hire. We want people who can conform to a process — uniformity, structure, T-charting, sales scripts — instead of "winging it." <em>Complete at least two fields.</em>
+          </div>
+
+          <div class="field">
+            <label>Tell me about a time you had to sell something you didn't fully believe in at first.</label>
+            <textarea name="coach_sell_unbelief"></textarea>
+          </div>
+          <div class="field">
+            <label>How do you handle rejection or a "no"?</label>
+            <textarea name="coach_rejection"></textarea>
+          </div>
+          <div class="field">
+            <label>When was the last time you received feedback you didn't agree with? How did you respond?</label>
+            <textarea name="coach_feedback"></textarea>
+          </div>
+          <div class="field">
+            <label>Do you prefer structure and scripts, or freedom and improvisation? Why?</label>
+            <textarea name="coach_structure"></textarea>
+          </div>
+
+          <div class="note-box" style="margin-top: 14px;">
+            <strong>Xfinity sales scenarios — listen for how they think on their feet.</strong>
+          </div>
+
+          <div class="field">
+            <label>A customer walks in just to pay their bill. How would you turn that into a sales conversation?</label>
+            <textarea name="scenario_bill_pay" placeholder="Looking for: warm approach, discovery questions, bundling instinct…"></textarea>
+          </div>
+          <div class="field">
+            <label>If a customer walks into the store yelling, upset about their bill, what would you do to help diffuse the situation?</label>
+            <textarea name="scenario_upset_customer" placeholder="Looking for: composure, empathy first, listens before solving, knows when to escalate…"></textarea>
+          </div>
+          <div class="field">
+            <label>A customer says "I'm happy with my current provider, I'm just looking." What's your next move?</label>
+            <textarea name="scenario_just_looking" placeholder="Looking for: doesn't give up, asks questions, finds pain points…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: Work Ethic & Accountability -->
+    <div class="section" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">5</span>
+        <span class="section-title">Work Ethic &amp; Accountability</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+          <div class="note-box"><em>Complete at least two fields.</em></div>
+
+          <div class="field">
+            <label>What does a "hard day's work" mean to you?</label>
+            <textarea name="work_hard_day"></textarea>
+          </div>
+          <div class="field">
+            <label>How do you handle days where traffic is slow and energy is low?</label>
+            <textarea name="work_slow_day"></textarea>
+          </div>
+          <div class="field">
+            <label>Describe a time you were held accountable for missing a goal.</label>
+            <textarea name="work_accountability"></textarea>
+          </div>
+          <div class="field">
+            <label>What would your last manager say you need to improve on?</label>
+            <textarea name="work_improvement"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: Role Reality Check -->
+    <div class="section" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">6</span>
+        <span class="section-title">Role Reality Check</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+
+          <div class="note-box">
+            <strong>We work hard to play hard.</strong> Weekly contests for free lunches, big prizes (TVs, speakers, concert/sporting tickets), and a four-day, three-night all-expense-paid Winner's Circle trip for top performers. Which of these would peak the candidate's interest?
+          </div>
+
+          <div class="field">
+            <label>Motivators that peaked their interest <span class="helper">(select all that apply)</span></label>
+            <div class="button-group" style="flex-wrap: wrap;">
+              <label><input type="checkbox" name="motivators" value="Weekly Free Lunches" /><span class="btn-text">Weekly Free Lunches</span></label>
+              <label><input type="checkbox" name="motivators" value="Big Ticket Electronics" /><span class="btn-text">Big Ticket Electronics</span></label>
+              <label><input type="checkbox" name="motivators" value="Concert / Sporting Event Tickets" /><span class="btn-text">Concert / Sporting Tickets</span></label>
+              <label><input type="checkbox" name="motivators" value="Winner's Circle Trip" /><span class="btn-text">Winner's Circle Trip</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>With joining a commission-based company, what is the candidate hoping to make at Blufox?</label>
+            <input type="text" name="pay_expectations" placeholder="e.g. $20–$25/hr" />
+          </div>
+
+          <div class="note-box">
+            <strong>Discuss with the candidate:</strong>
+            <ol>
+              <li>Full benefits package (Health, Dental, Vision, 401k with 3% match) via ADP if selected.</li>
+              <li>Hourly + commission job. Hourly rate is ____ plus commission. Most reps make $18–$23/hr; top performers earn over $30/hr.</li>
+              <li>Bi-weekly pay. First check of each month = hourly only. Last check = hourly + commission for that month.</li>
+              <li>Commissions on a two-month delay (April sales paid in June, etc). 30-day money-back guarantee on customer side; commissions paid after the 30-day audit. No chargebacks after payout.</li>
+            </ol>
+          </div>
+
+          <div class="field-row">
+            <div>
+              <label>Discussed hourly rate?</label>
+              <div class="button-group">
+                <label><input type="radio" name="discussed_hourly" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="discussed_hourly" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+            <div>
+              <label>Explained commission structure?</label>
+              <div class="button-group">
+                <label><input type="radio" name="discussed_commission" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="discussed_commission" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div>
+              <label>Explained the two-month commission delay?</label>
+              <div class="button-group">
+                <label><input type="radio" name="discussed_delay" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="discussed_delay" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+            <div>
+              <label>Discussed monthly metrics (XM sales, T-Charting, NPS)?</label>
+              <div class="button-group">
+                <label><input type="radio" name="discussed_metrics" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="discussed_metrics" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div>
+              <label>Explained standing for long shifts (candidate comfortable)?</label>
+              <div class="button-group">
+                <label><input type="radio" name="discussed_standing" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="discussed_standing" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+            <div>
+              <label>Discussed location customer volume / interactions?</label>
+              <div class="button-group">
+                <label><input type="radio" name="discussed_volume" value="Yes" /><span class="btn-text">Yes</span></label>
+                <label><input type="radio" name="discussed_volume" value="No" /><span class="btn-text">No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>After discussing the entire role, does the candidate want to proceed with employment?</label>
+            <div class="button-group">
+              <label><input type="radio" name="candidate_wants_proceed" value="Yes" /><span class="btn-text">Yes</span></label>
+              <label><input type="radio" name="candidate_wants_proceed" value="No" /><span class="btn-text">No</span></label>
+              <label><input type="radio" name="candidate_wants_proceed" value="Unsure" /><span class="btn-text">Unsure</span></label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 7: Should We Proceed -->
+    <div class="section" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">7</span>
+        <span class="section-title">Should We Proceed?</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+          <div class="note-box">
+            <strong>Ideal candidate looks like:</strong>
+            <ul>
+              <li>Coachability</li>
+              <li>Sales potential</li>
+              <li>Energy level</li>
+              <li>Communication skills</li>
+              <li>Culture fit</li>
+            </ul>
+          </div>
+
+          <div class="field">
+            <label>Any immediate red flags that would prevent us from proceeding?</label>
+            <div class="button-group">
+              <label><input type="radio" name="red_flags_present" value="Yes" /><span class="btn-text">Yes</span></label>
+              <label><input type="radio" name="red_flags_present" value="No" /><span class="btn-text">No</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>If yes, what were those red flags?</label>
+            <textarea name="red_flags_details"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Would you trust this person alone in your store? Why or why not?</label>
+            <textarea name="trust_alone"></textarea>
+          </div>
+
+          <div class="field">
+            <label>What makes you want to hire this candidate, or what would prevent you from hiring this candidate?</label>
+            <textarea name="hire_rationale"></textarea>
+          </div>
+
+          <div class="field">
+            <label>After conducting the interview, do you want to proceed with hiring this candidate?</label>
+            <div class="button-group">
+              <label><input type="radio" name="recommend_hire" value="Yes" /><span class="btn-text">Yes</span></label>
+              <label><input type="radio" name="recommend_hire" value="No" /><span class="btn-text">No</span></label>
+              <label><input type="radio" name="recommend_hire" value="Unsure, I need another opinion" /><span class="btn-text">Unsure — need another opinion</span></label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 8: Resume Upload -->
+    <div class="section" data-section>
+      <div class="section-header" data-toggle>
+        <span class="section-number">8</span>
+        <span class="section-title">Upload Candidate's Resume / Photos</span>
+        <span class="section-caret">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+          <div class="note-box">
+            Snap photos or upload a PDF of the candidate's resume so the hiring team can review everything before they come in. You can upload up to <strong>4 files</strong>. Optional — but strongly encouraged.
+          </div>
+
+          <label for="resume-input" class="file-drop" id="file-drop">
+            <input type="file" id="resume-input" accept="image/*,application/pdf,.doc,.docx" multiple />
+            <div class="file-drop-icon">📄</div>
+            <div class="file-drop-text">
+              <strong>Click to upload</strong> or drag &amp; drop<br />
+              <span style="font-size: 11.5px; color: var(--text-muted);">JPG, PNG, PDF, or DOC — up to 4 files, 8MB each</span>
+            </div>
+          </label>
+          <div id="file-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-area">
+      <button type="submit" class="submit-btn" id="submit-btn">Submit Interview Guide</button>
+      <div class="status-msg" id="status-msg"></div>
+    </div>
+
+  </form>
+
+  <div class="footer">
+    Now Go Cook. 🔥 &nbsp;·&nbsp; <strong>Cook County Cooks — C³</strong>
+  </div>
+
+</div>
+
+<script>
+  // ============================================================
+  // CONFIG
+  // ============================================================
+  const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/20441079/ug5tfno/';
+  const STORE_DIRECTORY_URL = 'https://blufoxmobile.github.io/Daily-Sales-Report/data/store-directory.json';
+  const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024; // 8MB cap per file (Zapier-safe)
+  const MAX_FILES = 4;
+
+  // Embedded fallback in case the live fetch fails (offline / CORS / etc.)
+  const FALLBACK_DIRECTORY = {
+    "stores": ["Bourbonnais Xfinity Store","Burbank Xfinity Store","Calumet City Xfinity Store","Cicero Xfinity Store","Dekalb Xfinity Store","Elkhart Xfinity Store","Evanston Xfinity Store","Evergreen Park Xfinity Store","Frankfort Xfinity Store","Glenview Xfinity Store","Greeneville Xfinity Store","Hammond Xfinity Store","Johnson City Xfinity Store","Kildeer Xfinity Store","Michigan City Xfinity Store","Oak Ridge Xfinity Store","Round Lake Beach Xfinity Store","Schererville Xfinity Store","South Skokie Xfinity Store","South Bend Xfinity Store","South Knoxville Xfinity Store","Tinley Park Xfinity Store","Uptown Xfinity Store","Valparaiso Xfinity Store"],
+    "storeManagers": {"Burbank Xfinity Store":"ZSalazar@blufoxmobile.com","Cicero Xfinity Store":"fSalazar@blufoxmobile.com","Calumet City Xfinity Store":"ereyes@blufoxmobile.com","Dekalb Xfinity Store":"ZMitchell@blufoxmobile.com","Elkhart Xfinity Store":"dRegan@blufoxmobile.com","Evergreen Park Xfinity Store":"mRivera@blufoxmobile.com","Evanston Xfinity Store":"jGabbara@blufoxmobile.com","Frankfort Xfinity Store":"FPedraza-Scalfano@blufoxmobile.com","Glenview Xfinity Store":"tChowdhury@blufoxmobile.com","Greeneville Xfinity Store":"jTrentham@blufoxmobile.com","Hammond Xfinity Store":"ABell@blufoxmobile.com","Johnson City Xfinity Store":"vHuerto@blufoxmobile.com","Kildeer Xfinity Store":"GWilliams@blufoxmobile.com","Michigan City Xfinity Store":"CCrooks@blufoxmobile.com","Oak Ridge Xfinity Store":"kKirkland@blufoxmobile.com","Round Lake Beach Xfinity Store":"ISolis@blufoxmobile.com","Schererville Xfinity Store":"miJackson@blufoxmobile.com","South Knoxville Xfinity Store":"zSpradling@blufoxmobile.com","Tinley Park Xfinity Store":"sOrozco@blufoxmobile.com","Uptown Xfinity Store":"HDodge@blufoxmobile.com","Valparaiso Xfinity Store":"EWashington@blufoxmobile.com","Bourbonnais Xfinity Store":"jbilbrey@blufoxmobile.com","South Bend Xfinity Store":"jbilbrey@blufoxmobile.com","South Skokie Xfinity Store":"OsGarcia@blufoxmobile.com"},
+    "storeDMs": {"Bourbonnais Xfinity Store":"juCarrillo@blufoxmobile.com","Burbank Xfinity Store":"juCarrillo@blufoxmobile.com","Calumet City Xfinity Store":"juCarrillo@blufoxmobile.com","Cicero Xfinity Store":"jcabrales@blufoxmobile.com","Dekalb Xfinity Store":"juCarrillo@blufoxmobile.com","Elkhart Xfinity Store":"jcabrales@blufoxmobile.com","Evanston Xfinity Store":"IDhorajiwala@blufoxmobile.com","Frankfort Xfinity Store":"juCarrillo@blufoxmobile.com","Glenview Xfinity Store":"IDhorajiwala@blufoxmobile.com","Greeneville Xfinity Store":"mbrooks@blufoxmobile.com","Hammond Xfinity Store":"jcabrales@blufoxmobile.com","Johnson City Xfinity Store":"mbrooks@blufoxmobile.com","Kildeer Xfinity Store":"IDhorajiwala@blufoxmobile.com","Michigan City Xfinity Store":"jcabrales@blufoxmobile.com","Oak Ridge Xfinity Store":"mbrooks@blufoxmobile.com","Round Lake Beach Xfinity Store":"IDhorajiwala@blufoxmobile.com","Schererville Xfinity Store":"jcabrales@blufoxmobile.com","South Bend Xfinity Store":"jcabrales@blufoxmobile.com","South Knoxville Xfinity Store":"mbrooks@blufoxmobile.com","Tinley Park Xfinity Store":"juCarrillo@blufoxmobile.com","Uptown Xfinity Store":"IDhorajiwala@blufoxmobile.com","Valparaiso Xfinity Store":"jcabrales@blufoxmobile.com","Evergreen Park Xfinity Store":"juCarrillo@blufoxmobile.com","South Skokie Xfinity Store":"IDhorajiwala@blufoxmobile.com"},
+    "storeManagerNames": {"Burbank Xfinity Store":"Zuri Salazar","Calumet City Xfinity Store":"Eric Reyes","Cicero Xfinity Store":"Francisco Salazar","Dekalb Xfinity Store":"ZQ Mitchell","Elkhart Xfinity Store":"DJ Regan","Evergreen Park Xfinity Store":"Michael Rivera","Evanston Xfinity Store":"Jonathan Gabbara","Frankfort Xfinity Store":"Frankie Scalfano","Glenview Xfinity Store":"Tanzim Chowdhury","Greeneville Xfinity Store":"Josh Trentham","Hammond Xfinity Store":"Alexis Bell","Johnson City Xfinity Store":"VG Huerto","Michigan City Xfinity Store":"Collin Crooks","Kildeer Xfinity Store":"Gavin Williams","Oak Ridge Xfinity Store":"Kayla Kirkland","Schererville Xfinity Store":"Michael Jackson","Round Lake Beach Xfinity Store":"Irvin Solis","Valparaiso Xfinity Store":"Emari Washington","Uptown Xfinity Store":"Hunter Dodge","Tinley Park Xfinity Store":"Sebas Orozco","South Knoxville Xfinity Store":"Zoe Spradling","Bourbonnais Xfinity Store":"Vacant Position","South Bend Xfinity Store":"Vacant Position","South Skokie Xfinity Store":"Ozzie Garcia"}
+  };
+
+  let directory = null;
+  let resumeFiles = []; // array of { name, type, size, base64 }, max 4
+
+  // ============================================================
+  // ACCORDION
+  // ============================================================
+  document.querySelectorAll('[data-toggle]').forEach(header => {
+    header.addEventListener('click', () => {
+      header.parentElement.classList.toggle('open');
+    });
+  });
+
+  // ============================================================
+  // DATE DEFAULT (today)
+  // ============================================================
+  const dateField = document.getElementById('date');
+  const today = new Date();
+  dateField.value = today.toISOString().split('T')[0];
+
+  // ============================================================
+  // LOAD STORE DIRECTORY
+  // ============================================================
+  async function loadDirectory() {
+    try {
+      const res = await fetch(STORE_DIRECTORY_URL, { cache: 'no-cache' });
+      if (!res.ok) throw new Error('Fetch failed');
+      directory = await res.json();
+      console.log('Loaded live directory, updated', directory.updatedAt);
+    } catch (err) {
+      console.warn('Falling back to embedded directory:', err.message);
+      directory = FALLBACK_DIRECTORY;
+    }
+    populateStoreDropdown();
+  }
+
+  function populateStoreDropdown() {
+    const select = document.getElementById('store');
+    const stores = (directory.stores || []).slice().sort();
+    select.innerHTML = '<option value="">Select a store…</option>' +
+      stores.map(s => `<option value="${s}">${s}</option>`).join('');
+  }
+
+  document.getElementById('store').addEventListener('change', (e) => {
+    const store = e.target.value;
+    const mgrEmail = directory.storeManagers?.[store] || '';
+    const mgrName = directory.storeManagerNames?.[store] || '';
+    const dmEmail = directory.storeDMs?.[store] || '';
+
+    document.getElementById('store_manager_name').value = mgrName;
+    document.getElementById('store_manager_email').value = mgrEmail;
+    document.getElementById('district_manager_email').value = dmEmail;
+
+    const info = document.getElementById('resolved-info');
+    if (store) {
+      info.innerHTML = `
+        <strong>Auto-linked routing:</strong><br>
+        Store Manager: <code>${mgrName || '—'}</code> &lt;<code>${mgrEmail || '—'}</code>&gt;<br>
+        District Manager: <code>${dmEmail || '—'}</code>
+      `;
+      info.classList.add('show');
+    } else {
+      info.classList.remove('show');
+    }
+  });
+
+  loadDirectory();
+
+  // ============================================================
+  // RESUME UPLOAD (base64, up to 4 files)
+  // ============================================================
+  const fileInput = document.getElementById('resume-input');
+  const fileDrop = document.getElementById('file-drop');
+  const fileList = document.getElementById('file-list');
+
+  function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result; // data:<mime>;base64,<data>
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderFileList() {
+    fileList.innerHTML = resumeFiles.map((f, i) => `
+      <div class="file-row">
+        <span class="file-row-name">✓ ${escapeHtml(f.name)} (${(f.size / 1024).toFixed(0)} KB)</span>
+        <button type="button" data-remove="${i}" title="Remove file">✕</button>
+      </div>
+    `).join('');
+    // Wire up remove buttons
+    fileList.querySelectorAll('button[data-remove]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.remove, 10);
+        resumeFiles.splice(idx, 1);
+        renderFileList();
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function handleFiles(fileListIn) {
+    const incoming = Array.from(fileListIn || []);
+    if (incoming.length === 0) return;
+
+    const slotsLeft = MAX_FILES - resumeFiles.length;
+    if (slotsLeft <= 0) {
+      alert(`You've already uploaded ${MAX_FILES} files. Remove one to add another.`);
+      fileInput.value = '';
+      return;
+    }
+
+    const toProcess = incoming.slice(0, slotsLeft);
+    if (incoming.length > slotsLeft) {
+      alert(`Only ${slotsLeft} more file${slotsLeft === 1 ? '' : 's'} can be added — extras were ignored.`);
+    }
+
+    for (const file of toProcess) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        alert(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB — files must be under 8MB. Skipping.`);
+        continue;
+      }
+      const base64 = await readFileAsBase64(file);
+      resumeFiles.push({
+        name: file.name,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
+        base64: base64
+      });
+    }
+    renderFileList();
+    fileInput.value = ''; // Reset so the same file can be re-picked if removed
+  }
+
+  fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+  // Drag & drop
+  ['dragenter', 'dragover'].forEach(ev => {
+    fileDrop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      fileDrop.classList.add('drag');
+    });
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    fileDrop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      fileDrop.classList.remove('drag');
+    });
+  });
+  fileDrop.addEventListener('drop', (e) => {
+    handleFiles(e.dataTransfer.files);
+  });
+
+  // ============================================================
+  // FORM SUBMISSION
+  // ============================================================
+  const form = document.getElementById('interview-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const statusMsg = document.getElementById('status-msg');
+
+  function collectFormData() {
+    const data = {};
+    const fd = new FormData(form);
+
+    // Single values
+    for (const key of fd.keys()) {
+      if (data[key] !== undefined) continue;
+      const values = fd.getAll(key);
+      data[key] = values.length > 1 ? values : values[0];
+    }
+
+    // Multi-select checkboxes — explicitly handle "motivators"
+    data.motivators = fd.getAll('motivators');
+
+    // Pull hidden auto-resolved fields
+    data.store_manager_name = document.getElementById('store_manager_name').value;
+    data.store_manager_email = document.getElementById('store_manager_email').value;
+    data.district_manager_email = document.getElementById('district_manager_email').value;
+
+    // Resume files (up to 4) — numbered fields for easy Zapier mapping
+    data.resume_count = resumeFiles.length;
+    for (let i = 0; i < MAX_FILES; i++) {
+      const f = resumeFiles[i];
+      const n = i + 1; // resume_1_*, resume_2_*, etc.
+      data[`resume_${n}_filename`] = f ? f.name : '';
+      data[`resume_${n}_mimetype`] = f ? f.type : '';
+      data[`resume_${n}_size_bytes`] = f ? f.size : 0;
+      data[`resume_${n}_base64`] = f ? f.base64 : '';
+    }
+
+    // Metadata
+    data.form_name = 'Interview Guide';
+    data.submitted_at = new Date().toISOString();
+
+    return data;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span>Submitting…';
+    statusMsg.classList.remove('show', 'success', 'error');
+
+    const payload = collectFormData();
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      // Zapier returns 200 with {"status":"success"} on success
+      if (!res.ok) throw new Error(`Webhook responded ${res.status}`);
+
+      statusMsg.textContent = '✓ Interview guide submitted! The hiring team will receive it shortly.';
+      statusMsg.classList.add('show', 'success');
+      form.reset();
+      resumeFiles = [];
+      renderFileList();
+      document.getElementById('resolved-info').classList.remove('show');
+      // Re-set today's date
+      dateField.value = new Date().toISOString().split('T')[0];
+      // Collapse all sections back
+      document.querySelectorAll('[data-section]').forEach((s, i) => {
+        if (i === 0) s.classList.add('open'); else s.classList.remove('open');
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      statusMsg.textContent = `✗ Couldn't submit: ${err.message}. Please try again or contact Jeff.`;
+      statusMsg.classList.add('show', 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Interview Guide';
+    }
+  });
+</script>
+
+</body>
+</html>
