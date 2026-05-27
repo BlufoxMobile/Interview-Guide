@@ -883,11 +883,11 @@
           </div>
 
           <label for="resume-input" class="file-drop" id="file-drop">
-            <input type="file" id="resume-input" accept="image/*,application/pdf,.doc,.docx" multiple />
-            <div class="file-drop-icon">📄</div>
+            <input type="file" id="resume-input" accept="image/*" multiple capture="environment" />
+            <div class="file-drop-icon">📷</div>
             <div class="file-drop-text">
-              <strong>Click to upload</strong> or drag &amp; drop<br />
-              <span style="font-size: 11.5px; color: var(--text-muted);">JPG, PNG, PDF, or DOC — up to 4 files, 8MB each</span>
+              <strong>Tap to take or upload photos</strong> of the resume<br />
+              <span style="font-size: 11.5px; color: var(--text-muted);">Up to 4 photos · JPG/PNG, auto-compressed and embedded in the email</span>
             </div>
           </label>
           <div id="file-list"></div>
@@ -915,8 +915,13 @@
   // ============================================================
   const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/20441079/ug5tfno/';
   const STORE_DIRECTORY_URL = 'https://blufoxmobile.github.io/Daily-Sales-Report/data/store-directory.json';
-  const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024; // 8MB cap per file (Zapier-safe)
   const MAX_FILES = 4;
+  // Photos are compressed client-side before sending — 800px @ 0.68 quality
+  // gives crisp inline-email rendering and keeps the JSON payload under
+  // Zapier's HTTP-413 ceiling (~6MB).
+  const IMG_MAX_DIMENSION = 800;
+  const IMG_QUALITY = 0.68;
+  const MAX_PAYLOAD_BYTES = 4500000; // ~4.5MB
 
   // Embedded fallback in case the live fetch fails (offline / CORS / etc.)
   const FALLBACK_DIRECTORY = {
@@ -927,7 +932,9 @@
   };
 
   let directory = null;
-  let resumeFiles = []; // array of { name, type, size, base64 }, max 4
+  // Each entry: { name, mimeType, sizeKB, dataUrl } where dataUrl is a full
+  // data:image/jpeg;base64,XXX string we embed directly in the email HTML.
+  let resumeFiles = [];
 
   // ============================================================
   // ACCORDION
@@ -994,33 +1001,125 @@
   loadDirectory();
 
   // ============================================================
-  // RESUME UPLOAD (base64, up to 4 files)
+  // RESUME PHOTO UPLOAD — client-side compression to embed inline in email
   // ============================================================
   const fileInput = document.getElementById('resume-input');
   const fileDrop = document.getElementById('file-drop');
   const fileList = document.getElementById('file-list');
 
-  function readFileAsBase64(file) {
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Compress a single image file → JPEG data URL.
+  // Retries at smaller dimensions if iOS Safari runs out of memory.
+  function compressImage(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      reader.onerror = () => reject(reader.error || new Error('Could not read file'));
       reader.onload = () => {
-        const result = reader.result; // data:<mime>;base64,<data>
-        const base64 = result.split(',')[1];
-        resolve(base64);
+        const img = new Image();
+        img.onerror = () => reject(new Error('Could not load image (corrupt or unsupported format)'));
+        img.onload = () => {
+          const attempts = [
+            { max: IMG_MAX_DIMENSION, q: IMG_QUALITY },
+            { max: 640, q: 0.62 },
+            { max: 520, q: 0.58 },
+            { max: 400, q: 0.55 }
+          ];
+          let lastErr = null;
+          for (const a of attempts) {
+            try {
+              let { width, height } = img;
+              if (width > a.max || height > a.max) {
+                if (width >= height) { height = Math.round(height * (a.max / width)); width = a.max; }
+                else { width = Math.round(width * (a.max / height)); height = a.max; }
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) throw new Error('No 2D canvas context');
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, width, height);
+              ctx.drawImage(img, 0, 0, width, height);
+              const dataUrl = canvas.toDataURL('image/jpeg', a.q);
+              if (!dataUrl || dataUrl.length < 500 || !dataUrl.startsWith('data:image/')) {
+                throw new Error('Encoder returned empty image at ' + a.max + 'px');
+              }
+              canvas.width = 0; canvas.height = 0;
+              resolve({
+                name: (file.name || 'resume.jpg').replace(/\.\w+$/, '') + '.jpg',
+                mimeType: 'image/jpeg',
+                sizeKB: Math.round((dataUrl.length * 0.75) / 1024),
+                dataUrl: dataUrl
+              });
+              return;
+            } catch (err) {
+              lastErr = err;
+            }
+          }
+          reject(lastErr || new Error('Image compression failed'));
+        };
+        img.src = reader.result;
       };
-      reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  // Re-encode an already-compressed photo if assembled payload exceeds size cap.
+  function recompressDataUrl(dataUrl, maxDim, quality, name) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not decode stored image'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width >= height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+          else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('No 2D canvas context'));
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        const out = canvas.toDataURL('image/jpeg', quality);
+        canvas.width = 0; canvas.height = 0;
+        if (!out || out.length < 500 || !out.startsWith('data:image/')) {
+          return reject(new Error('Encoder returned empty image at ' + maxDim + 'px'));
+        }
+        resolve({
+          name: name || 'resume.jpg',
+          mimeType: 'image/jpeg',
+          sizeKB: Math.round((out.length * 0.75) / 1024),
+          dataUrl: out
+        });
+      };
+      img.src = dataUrl;
+    });
+  }
+
+  async function shrinkAllPhotosTo(maxDim, quality) {
+    const next = [];
+    for (const fo of resumeFiles) {
+      try {
+        next.push(await recompressDataUrl(fo.dataUrl, maxDim, quality, fo.name));
+      } catch (_) {
+        next.push(fo); // keep original if recompression fails
+      }
+    }
+    resumeFiles = next;
   }
 
   function renderFileList() {
     fileList.innerHTML = resumeFiles.map((f, i) => `
       <div class="file-row">
-        <span class="file-row-name">✓ ${escapeHtml(f.name)} (${(f.size / 1024).toFixed(0)} KB)</span>
-        <button type="button" data-remove="${i}" title="Remove file">✕</button>
+        <span class="file-row-name">✓ ${escapeHtml(f.name)} (${f.sizeKB} KB, compressed)</span>
+        <button type="button" data-remove="${i}" title="Remove photo">✕</button>
       </div>
     `).join('');
-    // Wire up remove buttons
     fileList.querySelectorAll('button[data-remove]').forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.remove, 10);
@@ -1030,46 +1129,48 @@
     });
   }
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let pendingCompressions = 0;
+  function updateSubmitDisabled() {
+    submitBtn.disabled = pendingCompressions > 0;
+    submitBtn.textContent = pendingCompressions > 0
+      ? `Compressing ${pendingCompressions} photo${pendingCompressions === 1 ? '' : 's'}…`
+      : 'Submit Interview Guide';
   }
 
   async function handleFiles(fileListIn) {
     const incoming = Array.from(fileListIn || []);
     if (incoming.length === 0) return;
-
-    const slotsLeft = MAX_FILES - resumeFiles.length;
+    const slotsLeft = MAX_FILES - resumeFiles.length - pendingCompressions;
     if (slotsLeft <= 0) {
-      alert(`You've already uploaded ${MAX_FILES} files. Remove one to add another.`);
+      alert(`You've already uploaded ${MAX_FILES} photos. Remove one to add another.`);
       fileInput.value = '';
       return;
     }
-
     const toProcess = incoming.slice(0, slotsLeft);
     if (incoming.length > slotsLeft) {
-      alert(`Only ${slotsLeft} more file${slotsLeft === 1 ? '' : 's'} can be added — extras were ignored.`);
+      alert(`Only ${slotsLeft} more photo${slotsLeft === 1 ? '' : 's'} can be added — extras were ignored.`);
     }
-
     for (const file of toProcess) {
-      if (file.size > MAX_FILE_SIZE_BYTES) {
-        alert(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB — files must be under 8MB. Skipping.`);
-        continue;
+      pendingCompressions++;
+      updateSubmitDisabled();
+      try {
+        const compressed = await compressImage(file);
+        if (resumeFiles.length < MAX_FILES) {
+          resumeFiles.push(compressed);
+          renderFileList();
+        }
+      } catch (err) {
+        alert(`Could not process "${file.name}": ${err.message}`);
+      } finally {
+        pendingCompressions--;
+        updateSubmitDisabled();
       }
-      const base64 = await readFileAsBase64(file);
-      resumeFiles.push({
-        name: file.name,
-        type: file.type || 'application/octet-stream',
-        size: file.size,
-        base64: base64
-      });
     }
-    renderFileList();
-    fileInput.value = ''; // Reset so the same file can be re-picked if removed
+    fileInput.value = '';
   }
 
   fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-  // Drag & drop
   ['dragenter', 'dragover'].forEach(ev => {
     fileDrop.addEventListener(ev, (e) => {
       e.preventDefault();
@@ -1087,72 +1188,316 @@
   });
 
   // ============================================================
-  // FORM SUBMISSION
+  // FORM SUBMISSION — build emailHtml with inline photos and send
   // ============================================================
   const form = document.getElementById('interview-form');
   const submitBtn = document.getElementById('submit-btn');
   const statusMsg = document.getElementById('status-msg');
 
-  function collectFormData() {
-    const data = {};
+  function collectFields() {
     const fd = new FormData(form);
+    const get = (k) => (fd.get(k) || '').toString().trim();
+    return {
+      date: get('date'),
+      interviewer_name: get('interviewer_name'),
+      interviewer_email: get('interviewer_email'),
+      candidate_first_name: get('candidate_first_name'),
+      candidate_last_name: get('candidate_last_name'),
+      store: get('store'),
+      store_manager_name: document.getElementById('store_manager_name').value || '',
+      store_manager_email: document.getElementById('store_manager_email').value || '',
+      district_manager_email: document.getElementById('district_manager_email').value || '',
+      schedule_understanding: get('schedule_understanding'),
+      prior_experience: get('prior_experience'),
+      transportation: get('transportation'),
+      weekend_availability: get('weekend_availability'),
+      age_18_plus: get('age_18_plus'),
+      work_authorized: get('work_authorized'),
+      background_check_ok: get('background_check_ok'),
+      languages_spoken: get('languages_spoken'),
+      motivation_role: get('motivation_role'),
+      motivation_brand: get('motivation_brand'),
+      motivation_success: get('motivation_success'),
+      motivation_last_job: get('motivation_last_job'),
+      motivation_long_term: get('motivation_long_term'),
+      coach_sell_unbelief: get('coach_sell_unbelief'),
+      coach_rejection: get('coach_rejection'),
+      coach_feedback: get('coach_feedback'),
+      coach_structure: get('coach_structure'),
+      scenario_bill_pay: get('scenario_bill_pay'),
+      scenario_upset_customer: get('scenario_upset_customer'),
+      scenario_just_looking: get('scenario_just_looking'),
+      work_hard_day: get('work_hard_day'),
+      work_slow_day: get('work_slow_day'),
+      work_accountability: get('work_accountability'),
+      work_improvement: get('work_improvement'),
+      motivators: fd.getAll('motivators').join(', '),
+      pay_expectations: get('pay_expectations'),
+      discussed_hourly: get('discussed_hourly'),
+      discussed_commission: get('discussed_commission'),
+      discussed_delay: get('discussed_delay'),
+      discussed_metrics: get('discussed_metrics'),
+      discussed_standing: get('discussed_standing'),
+      discussed_volume: get('discussed_volume'),
+      candidate_wants_proceed: get('candidate_wants_proceed'),
+      red_flags_present: get('red_flags_present'),
+      red_flags_details: get('red_flags_details'),
+      trust_alone: get('trust_alone'),
+      hire_rationale: get('hire_rationale'),
+      recommend_hire: get('recommend_hire')
+    };
+  }
 
-    // Single values
-    for (const key of fd.keys()) {
-      if (data[key] !== undefined) continue;
-      const values = fd.getAll(key);
-      data[key] = values.length > 1 ? values : values[0];
+  // Pretty-print the date as "May 27, 2026"
+  function prettifyDate(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso + 'T00:00:00');
+      if (isNaN(d.valueOf())) return iso;
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    } catch (_) { return iso; }
+  }
+
+  // ============================================================
+  // EMAIL HTML BUILDER — Outlook-friendly, photos embedded inline
+  // ============================================================
+  function buildEmailHtml(d) {
+    const esc = escapeHtml;
+    const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif";
+    const PURPLE = '#6138F5', PURPLE_LIGHT = '#8B6FF7', PURPLE_DEEP = '#4A1FD9', PURPLE_BG = '#F0EDFA';
+    const BG_PAGE = '#F4F2FA', BG_CARD = '#FFFFFF', BORDER = '#E5E0F5';
+    const TEXT_PRIMARY = '#1A1733', TEXT_SECONDARY = '#5C5680', TEXT_MUTED = '#7A6FA0';
+    const GREEN_BG = '#00854D', RED_BG = '#C42054', AMBER_BG = '#B07300';
+
+    const candidate = (d.candidate_first_name + ' ' + d.candidate_last_name).trim() || 'Candidate';
+    const rec = (d.recommend_hire || '').toLowerCase();
+    let recBg = TEXT_MUTED, recLabel = 'NO RECOMMENDATION GIVEN';
+    if (rec === 'yes') { recBg = GREEN_BG; recLabel = 'RECOMMENDED FOR HIRE'; }
+    else if (rec === 'no') { recBg = RED_BG; recLabel = 'DO NOT HIRE'; }
+    else if (rec) { recBg = AMBER_BG; recLabel = 'NEEDS SECOND OPINION'; }
+
+    // Row builder — returns '' if value is blank (auto-hide)
+    const row = (label, value, multiline) => {
+      if (!value || !String(value).trim()) return '';
+      const valHtml = multiline ? esc(value).replace(/\n/g, '<br>') : esc(value);
+      return `
+        <tr><td style="padding:10px 0 4px 0;font-family:${FONT};font-size:11px;font-weight:600;color:${TEXT_MUTED};text-transform:uppercase;letter-spacing:0.6px;">${esc(label)}</td></tr>
+        <tr><td style="padding:0 0 12px 0;font-family:${FONT};font-size:14px;color:${TEXT_PRIMARY};line-height:1.55;border-bottom:1px solid ${BORDER};">${valHtml}</td></tr>`;
+    };
+
+    const ynRow = (label, value) => {
+      if (!value) return '';
+      const v = String(value).trim();
+      let color = TEXT_PRIMARY;
+      if (v.toLowerCase() === 'yes') color = GREEN_BG;
+      else if (v.toLowerCase() === 'no') color = RED_BG;
+      return `
+        <tr>
+          <td style="padding:8px 12px;font-family:${FONT};font-size:13px;color:${TEXT_SECONDARY};border-bottom:1px solid ${BORDER};">${esc(label)}</td>
+          <td style="padding:8px 12px;font-family:${FONT};font-size:13px;font-weight:700;color:${color};text-align:right;border-bottom:1px solid ${BORDER};white-space:nowrap;">${esc(v)}</td>
+        </tr>`;
+    };
+
+    const section = (title, bodyHtml) => {
+      if (!bodyHtml || !bodyHtml.trim()) return '';
+      return `
+        <tr><td style="padding:24px 24px 0 24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PURPLE_BG};border-radius:8px;">
+            <tr><td style="padding:10px 14px;font-family:${FONT};font-size:12px;font-weight:700;color:${PURPLE_DEEP};letter-spacing:1px;text-transform:uppercase;">${esc(title)}</td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:6px 24px 0 24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${bodyHtml}</table>
+        </td></tr>`;
+    };
+
+    // Pre-Hire Compliance yes/no table
+    const complianceYn =
+      ynRow('Previous wireless / retail sales experience', d.prior_experience) +
+      ynRow('Reliable transportation', d.transportation) +
+      ynRow('Available weekends & evenings', d.weekend_availability) +
+      ynRow('At least 18 years old', d.age_18_plus) +
+      ynRow('Authorized to work in the U.S.', d.work_authorized) +
+      ynRow('OK with background check & drug test', d.background_check_ok);
+    const complianceTable = complianceYn ? `
+      <tr><td style="padding:8px 0 0 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${BORDER};border-radius:8px;border-collapse:separate;overflow:hidden;">${complianceYn}</table>
+      </td></tr>` : '';
+
+    const compliance = complianceTable +
+      row('Schedule Understanding', d.schedule_understanding) +
+      row('Languages Spoken', d.languages_spoken);
+
+    const motivation =
+      row('Why are you interested in this role specifically?', d.motivation_role, true) +
+      row('What attracted you to BluFox / Xfinity retail?', d.motivation_brand, true) +
+      row('What does success look like after 6 months?', d.motivation_success, true) +
+      row('What made you leave (or want to leave) your last job?', d.motivation_last_job, true) +
+      row('Where do you see yourself in 1–2 years?', d.motivation_long_term, true);
+
+    const mindset =
+      row("Time you had to sell something you didn't fully believe in", d.coach_sell_unbelief, true) +
+      row('How do you handle rejection or a "no"?', d.coach_rejection, true) +
+      row("Last feedback you didn't agree with — how did you respond?", d.coach_feedback, true) +
+      row('Structure & scripts, or freedom & improvisation? Why?', d.coach_structure, true) +
+      row('SCENARIO — Bill-pay customer → sales conversation', d.scenario_bill_pay, true) +
+      row('SCENARIO — Upset customer yelling about their bill', d.scenario_upset_customer, true) +
+      row('SCENARIO — Customer says "I\'m just looking"', d.scenario_just_looking, true);
+
+    const work =
+      row("What does a \"hard day's work\" mean to you?", d.work_hard_day, true) +
+      row('How do you handle slow days / low energy?', d.work_slow_day, true) +
+      row('Time you were held accountable for missing a goal', d.work_accountability, true) +
+      row('What would your last manager say you need to improve on?', d.work_improvement, true);
+
+    const realityYn =
+      ynRow('Discussed hourly rate', d.discussed_hourly) +
+      ynRow('Explained commission structure', d.discussed_commission) +
+      ynRow('Explained 2-month commission delay', d.discussed_delay) +
+      ynRow('Discussed monthly metrics', d.discussed_metrics) +
+      ynRow('Explained standing for long shifts', d.discussed_standing) +
+      ynRow('Discussed customer volume / interactions', d.discussed_volume);
+    const realityTable = realityYn ? `
+      <tr><td style="padding:8px 0 0 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid ${BORDER};border-radius:8px;border-collapse:separate;overflow:hidden;">${realityYn}</table>
+      </td></tr>` : '';
+    const reality =
+      row('Motivators That Peaked Interest', d.motivators) +
+      row('Pay Expectations', d.pay_expectations) +
+      realityTable +
+      row('Candidate Wants To Proceed?', d.candidate_wants_proceed);
+
+    const decision =
+      row('Red Flags Noticed?', d.red_flags_present) +
+      row('Red Flag Details', d.red_flags_details, true) +
+      row('Would you trust this person alone in your store? Why or why not?', d.trust_alone, true) +
+      row('What makes you want to hire / what would prevent you from hiring?', d.hire_rationale, true);
+
+    // PHOTOS — inline <img> tags in a 2-column grid
+    let photosHtml = '';
+    if (resumeFiles.length > 0) {
+      const cells = resumeFiles.map(p =>
+        `<td width="50%" style="padding:6px;vertical-align:top;">
+          <img src="${p.dataUrl}" alt="Resume photo" style="width:100%;max-width:300px;height:auto;display:block;border-radius:8px;border:1px solid ${BORDER};">
+        </td>`
+      );
+      const rows = [];
+      for (let i = 0; i < cells.length; i += 2) {
+        rows.push('<tr>' + cells[i] + (cells[i + 1] || '<td width="50%" style="padding:6px;"></td>') + '</tr>');
+      }
+      const grid = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${rows.join('')}</table>`;
+      photosHtml = `
+        <tr><td style="padding:24px 24px 0 24px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PURPLE_BG};border-radius:8px;">
+            <tr><td style="padding:10px 14px;font-family:${FONT};font-size:12px;font-weight:700;color:${PURPLE_DEEP};letter-spacing:1px;text-transform:uppercase;">Resume Photos (${resumeFiles.length})</td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:10px 18px 0 18px;">${grid}</td></tr>`;
     }
 
-    // Multi-select checkboxes — explicitly handle "motivators"
-    data.motivators = fd.getAll('motivators');
+    const submittedBy = d.interviewer_name && d.interviewer_email
+      ? `${d.interviewer_name} (${d.interviewer_email})`
+      : (d.interviewer_name || d.interviewer_email);
+    const storeMgr = d.store_manager_name && d.store_manager_email
+      ? `${d.store_manager_name} <${d.store_manager_email}>`
+      : (d.store_manager_name || d.store_manager_email);
+    const submitterBlock = row('Submitted By', submittedBy);
 
-    // Pull hidden auto-resolved fields
-    data.store_manager_name = document.getElementById('store_manager_name').value;
-    data.store_manager_email = document.getElementById('store_manager_email').value;
-    data.district_manager_email = document.getElementById('district_manager_email').value;
+    return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Interview Guide — ${esc(candidate)}</title></head>
+<body style="margin:0;padding:0;background:${BG_PAGE};font-family:${FONT};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BG_PAGE};">
+  <tr><td align="center" style="padding:24px 12px;">
+    <table role="presentation" width="680" cellpadding="0" cellspacing="0" border="0" style="max-width:680px;width:100%;background:${BG_CARD};border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(74,31,217,0.08);">
+      <tr><td style="background:${PURPLE};background-image:linear-gradient(135deg,${PURPLE} 0%,${PURPLE_LIGHT} 100%);padding:28px 24px;">
+        <div style="font-family:${FONT};font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);letter-spacing:2px;text-transform:uppercase;">🔥 Cook County Cooks — C³ · Interview Guide</div>
+        <div style="padding-top:6px;font-family:${FONT};font-size:28px;font-weight:700;color:#ffffff;line-height:1.2;">${esc(candidate)}</div>
+        <div style="padding-top:4px;font-family:${FONT};font-size:14px;color:rgba(255,255,255,0.92);">${esc(d.store || 'Store not specified')}${d.date ? ' · ' + esc(prettifyDate(d.date)) : ''}</div>
+        <div style="padding-top:16px;">
+          <span style="background:${recBg};padding:8px 16px;border-radius:999px;font-family:${FONT};font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.8px;">${esc(recLabel)}</span>
+        </div>
+      </td></tr>
+      ${section('Submitter & Routing', submitterBlock + row('Store Manager', storeMgr) + row('District Manager', d.district_manager_email))}
+      ${section('Pre-Hire Compliance', compliance)}
+      ${section('Motivation & Intent', motivation)}
+      ${section('Sales Mindset & Scenarios', mindset)}
+      ${section('Work Ethic & Accountability', work)}
+      ${section('Role Reality Check', reality)}
+      ${section('Final Decision', decision)}
+      ${photosHtml}
+      <tr><td style="padding:32px 24px 24px 24px;border-top:1px solid ${BORDER};text-align:center;">
+        <div style="font-family:${FONT};font-size:11px;color:${TEXT_MUTED};line-height:1.5;">Now Go Cook. 🔥<br><strong style="color:${PURPLE_DEEP};">Cook County Cooks — C³</strong> · Interview Guide submitted via the C³ hiring portal</div>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`;
+  }
 
-    // Resume files (up to 4) — numbered fields for easy Zapier mapping
-    data.resume_count = resumeFiles.length;
-    for (let i = 0; i < MAX_FILES; i++) {
-      const f = resumeFiles[i];
-      const n = i + 1; // resume_1_*, resume_2_*, etc.
-      data[`resume_${n}_filename`] = f ? f.name : '';
-      data[`resume_${n}_mimetype`] = f ? f.type : '';
-      data[`resume_${n}_size_bytes`] = f ? f.size : 0;
-      data[`resume_${n}_base64`] = f ? f.base64 : '';
-    }
-
-    // Metadata
-    data.form_name = 'Interview Guide';
-    data.submitted_at = new Date().toISOString();
-
-    return data;
+  function buildPayload() {
+    const d = collectFields();
+    const candidate = (d.candidate_first_name + ' ' + d.candidate_last_name).trim() || 'Candidate';
+    const subject = d.store
+      ? `New Interview Guide: ${candidate} — ${d.store}`
+      : `New Interview Guide: ${candidate}`;
+    return {
+      // Everything the Zap needs lives here:
+      emailHtml: buildEmailHtml(d),
+      emailSubject: subject,
+      // Routing fields (in case Zapier needs them for To/CC):
+      storeManagerEmail: d.store_manager_email,
+      storeManagerName: d.store_manager_name,
+      storeDMEmail: d.district_manager_email,
+      store: d.store,
+      interviewerName: d.interviewer_name,
+      interviewerEmail: d.interviewer_email,
+      candidateName: candidate,
+      recommendHire: d.recommend_hire,
+      photoCount: resumeFiles.length,
+      formName: 'Interview Guide',
+      submittedAt: new Date().toISOString()
+    };
   }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (pendingCompressions > 0) {
+      statusMsg.textContent = `Still compressing ${pendingCompressions} photo${pendingCompressions === 1 ? '' : 's'} — try again in a moment.`;
+      statusMsg.classList.add('show', 'error');
+      return;
+    }
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner"></span>Submitting…';
     statusMsg.classList.remove('show', 'success', 'error');
 
-    const payload = collectFormData();
-
     try {
-      // NOTE: We deliberately do NOT set Content-Type: application/json.
-      // Zapier's CORS preflight response is missing Access-Control-Allow-Headers,
-      // so any header that triggers a preflight causes the browser to bail with
-      // "Failed to fetch". Sending a plain string body skips the preflight and
-      // Zapier still parses the body as JSON automatically.
+      let payload = buildPayload();
+      let body = JSON.stringify(payload);
+
+      // Shrink photos if payload exceeds Zapier's ~6MB cap
+      const SHRINK_LEVELS = [
+        { max: 640, q: 0.62, label: 'smaller' },
+        { max: 520, q: 0.58, label: 'smaller still' },
+        { max: 400, q: 0.55, label: 'much smaller' }
+      ];
+      let level = 0;
+      while (body.length > MAX_PAYLOAD_BYTES && level < SHRINK_LEVELS.length) {
+        const lvl = SHRINK_LEVELS[level++];
+        submitBtn.innerHTML = `<span class="spinner"></span>Resizing photos (${lvl.label})…`;
+        await shrinkAllPhotosTo(lvl.max, lvl.q);
+        payload = buildPayload();
+        body = JSON.stringify(payload);
+      }
+      submitBtn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+      // text/plain Content-Type avoids Zapier CORS preflight (still parsed as JSON)
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: body
       });
       if (!res.ok) throw new Error(`Webhook responded ${res.status}`);
-      const result = await res.json().catch(() => ({}));
-      if (result.status && result.status !== 'success') {
-        throw new Error(`Webhook reported: ${result.status}`);
-      }
 
       statusMsg.textContent = '✓ Interview guide submitted! The hiring team will receive it shortly.';
       statusMsg.classList.add('show', 'success');
@@ -1160,9 +1505,7 @@
       resumeFiles = [];
       renderFileList();
       document.getElementById('resolved-info').classList.remove('show');
-      // Re-set today's date
       dateField.value = new Date().toISOString().split('T')[0];
-      // Collapse all sections back
       document.querySelectorAll('[data-section]').forEach((s, i) => {
         if (i === 0) s.classList.add('open'); else s.classList.remove('open');
       });
