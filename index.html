@@ -1139,13 +1139,20 @@
     const payload = collectFormData();
 
     try {
+      // NOTE: We deliberately do NOT set Content-Type: application/json.
+      // Zapier's CORS preflight response is missing Access-Control-Allow-Headers,
+      // so any header that triggers a preflight causes the browser to bail with
+      // "Failed to fetch". Sending a plain string body skips the preflight and
+      // Zapier still parses the body as JSON automatically.
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      // Zapier returns 200 with {"status":"success"} on success
       if (!res.ok) throw new Error(`Webhook responded ${res.status}`);
+      const result = await res.json().catch(() => ({}));
+      if (result.status && result.status !== 'success') {
+        throw new Error(`Webhook reported: ${result.status}`);
+      }
 
       statusMsg.textContent = '✓ Interview guide submitted! The hiring team will receive it shortly.';
       statusMsg.classList.add('show', 'success');
