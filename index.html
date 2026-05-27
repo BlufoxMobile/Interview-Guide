@@ -19,14 +19,19 @@
     --xfinity-amber: #FFAA00;
     --xfinity-red: #E6004D;
     --blufox-dark: #0B0818;
-    --blufox-card: #140F2A;
-    --blufox-card-hover: #1B1538;
-    --blufox-border: #2A1F4F;
-    --text-primary: #F0EEFF;
-    --text-secondary: #B0A8D0;
-    --text-muted: #7A6FA0;
+    /* Each section card sits on top of the page bg — lighter purple-tinted
+       so sections clearly separate from the background. */
+    --blufox-card: #1F1740;
+    --blufox-card-inner: #261D4F;
+    --blufox-card-hover: #2B2256;
+    --blufox-border: #3B2D70;
+    --blufox-border-strong: #4D3D8E;
+    --text-primary: #F4F2FF;
+    --text-secondary: #C5BCE0;
+    --text-muted: #8C82B0;
     --money-green: #00E676;
-    --input-bg: #0F0A24;
+    --input-bg: #181030;
+    --note-bg: rgba(151, 71, 255, 0.10);
   }
 
   * { box-sizing: border-box; }
@@ -43,40 +48,41 @@
 
   body {
     background:
-      radial-gradient(ellipse at top, rgba(97, 56, 245, 0.15), transparent 60%),
-      radial-gradient(ellipse at bottom, rgba(151, 71, 255, 0.08), transparent 60%),
+      radial-gradient(ellipse at top, rgba(97, 56, 245, 0.18), transparent 60%),
+      radial-gradient(ellipse at bottom, rgba(151, 71, 255, 0.10), transparent 60%),
       var(--blufox-dark);
-    padding: 24px 16px 64px;
+    padding: 32px 16px 96px;
+    font-size: 16px;
   }
 
   .container {
-    max-width: 760px;
+    max-width: 780px;
     margin: 0 auto;
   }
 
   /* Header */
   .header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 36px;
   }
   .header-badge {
     display: inline-block;
-    padding: 6px 14px;
+    padding: 7px 16px;
     border-radius: 999px;
-    background: linear-gradient(135deg, rgba(97, 56, 245, 0.25), rgba(151, 71, 255, 0.15));
-    border: 1px solid rgba(139, 111, 247, 0.4);
+    background: linear-gradient(135deg, rgba(97, 56, 245, 0.30), rgba(151, 71, 255, 0.18));
+    border: 1px solid rgba(139, 111, 247, 0.45);
     color: var(--xfinity-purple-light);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
   .header h1 {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 38px;
+    font-size: 44px;
     font-weight: 700;
-    margin: 0 0 6px;
+    margin: 0 0 10px;
     background: linear-gradient(135deg, #F0EEFF 0%, var(--xfinity-purple-light) 50%, var(--xfinity-violet) 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -85,30 +91,36 @@
   }
   .header p {
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.6;
     margin: 0;
-    max-width: 580px;
+    max-width: 620px;
     margin-left: auto;
     margin-right: auto;
   }
 
-  /* Section / Accordion */
+  /* Section / Accordion — each section is a card that visually pops off the page */
   .section {
     background: var(--blufox-card);
     border: 1px solid var(--blufox-border);
-    border-radius: 12px;
-    margin-bottom: 10px;
+    border-radius: 16px;
+    margin-bottom: 18px;
     overflow: hidden;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+  .section:hover {
+    border-color: var(--blufox-border-strong);
   }
   .section.open {
-    border-color: rgba(139, 111, 247, 0.5);
+    border-color: rgba(139, 111, 247, 0.55);
+    box-shadow: 0 8px 32px rgba(97, 56, 245, 0.18);
   }
   .section-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
+    gap: 14px;
+    padding: 18px 22px;
     cursor: pointer;
     user-select: none;
     transition: background 0.15s ease;
@@ -120,22 +132,24 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
     background: linear-gradient(135deg, var(--xfinity-purple), var(--xfinity-violet));
     color: white;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(97, 56, 245, 0.4);
   }
   .section-title {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     flex: 1;
+    letter-spacing: -0.1px;
   }
   .section-caret {
     color: var(--xfinity-purple-light);
@@ -148,59 +162,65 @@
   .section-body {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    transition: max-height 0.35s ease;
   }
   .section.open .section-body {
-    max-height: 5000px;
+    max-height: 6000px;
   }
   .section-body-inner {
-    padding: 4px 18px 18px;
+    padding: 20px 22px 24px;
     border-top: 1px solid var(--blufox-border);
-    padding-top: 14px;
+    background: var(--blufox-card-inner);
   }
 
   /* Form elements */
   .field {
-    margin-bottom: 12px;
+    margin-bottom: 18px;
+  }
+  .field:last-child {
+    margin-bottom: 0;
   }
   .field-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 14px;
+    margin-bottom: 18px;
   }
   @media (max-width: 560px) {
     .field-row { grid-template-columns: 1fr; }
   }
   label {
     display: block;
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-secondary);
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     letter-spacing: 0.1px;
+    line-height: 1.45;
   }
   .helper {
-    font-size: 11.5px;
+    font-size: 13px;
     color: var(--text-muted);
     margin-top: 4px;
     font-style: italic;
+    font-weight: 500;
   }
   .note-box {
-    background: rgba(97, 56, 245, 0.08);
+    background: var(--note-bg);
     border-left: 3px solid var(--xfinity-purple-light);
-    padding: 10px 12px;
-    border-radius: 6px;
-    margin-bottom: 12px;
-    font-size: 12.5px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    font-size: 14px;
     color: var(--text-secondary);
-    line-height: 1.55;
+    line-height: 1.6;
   }
   .note-box strong { color: var(--text-primary); }
-  .note-box ul { margin: 6px 0 0; padding-left: 18px; }
-  .note-box li { margin-bottom: 2px; }
-  .note-box ol { margin: 6px 0 0; padding-left: 20px; }
-  .note-box ol li { margin-bottom: 8px; }
+  .note-box ul { margin: 8px 0 0; padding-left: 20px; }
+  .note-box li { margin-bottom: 4px; }
+  .note-box ol { margin: 8px 0 0; padding-left: 22px; }
+  .note-box ol li { margin-bottom: 10px; }
+  .note-box em { color: var(--text-muted); }
 
   input[type="text"],
   input[type="email"],
@@ -212,20 +232,21 @@
     background: var(--input-bg);
     border: 1px solid var(--blufox-border);
     color: var(--text-primary);
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 13.5px;
+    padding: 13px 14px;
+    border-radius: 10px;
+    font-size: 15px;
     font-family: inherit;
+    line-height: 1.5;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   textarea {
-    min-height: 70px;
+    min-height: 96px;
     resize: vertical;
   }
   input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--xfinity-purple-light);
-    box-shadow: 0 0 0 3px rgba(139, 111, 247, 0.18);
+    box-shadow: 0 0 0 3px rgba(139, 111, 247, 0.22);
   }
   select {
     appearance: none;
@@ -239,19 +260,19 @@
   .button-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
   }
   .button-group label {
     flex: 1;
-    min-width: 100px;
+    min-width: 110px;
     margin: 0;
     cursor: pointer;
     background: var(--input-bg);
     border: 1px solid var(--blufox-border);
     color: var(--text-secondary);
-    padding: 9px 12px;
-    border-radius: 8px;
-    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14.5px;
     font-weight: 500;
     text-align: center;
     transition: all 0.15s ease;
@@ -280,38 +301,39 @@
   .file-drop {
     background: var(--input-bg);
     border: 2px dashed var(--blufox-border);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 28px 20px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
   }
   .file-drop:hover, .file-drop.drag {
     border-color: var(--xfinity-purple-light);
-    background: rgba(97, 56, 245, 0.05);
+    background: rgba(97, 56, 245, 0.08);
   }
   .file-drop input[type="file"] { display: none; }
   .file-drop-icon {
-    font-size: 28px;
-    margin-bottom: 6px;
+    font-size: 36px;
+    margin-bottom: 10px;
   }
   .file-drop-text {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--text-secondary);
+    line-height: 1.6;
   }
   .file-drop-text strong { color: var(--xfinity-purple-light); }
   #file-list {
-    margin-top: 10px;
+    margin-top: 14px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
   .file-row {
-    padding: 9px 12px;
-    background: rgba(0, 230, 118, 0.08);
-    border: 1px solid rgba(0, 230, 118, 0.3);
-    border-radius: 8px;
-    font-size: 12.5px;
+    padding: 12px 14px;
+    background: rgba(0, 230, 118, 0.10);
+    border: 1px solid rgba(0, 230, 118, 0.35);
+    border-radius: 10px;
+    font-size: 14px;
     color: var(--money-green);
     display: flex;
     align-items: center;
@@ -329,8 +351,8 @@
     border: none;
     color: var(--xfinity-red);
     cursor: pointer;
-    font-size: 18px;
-    padding: 0 4px;
+    font-size: 20px;
+    padding: 0 6px;
     flex-shrink: 0;
   }
   .file-count-badge {
@@ -348,17 +370,17 @@
 
   /* Submit */
   .submit-area {
-    margin-top: 20px;
+    margin-top: 32px;
     text-align: center;
   }
   .submit-btn {
     background: linear-gradient(135deg, var(--xfinity-purple) 0%, var(--xfinity-violet) 100%);
     color: white;
     border: none;
-    padding: 14px 48px;
-    border-radius: 10px;
+    padding: 17px 56px;
+    border-radius: 12px;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     letter-spacing: 0.5px;
     cursor: pointer;
@@ -374,11 +396,12 @@
     cursor: not-allowed;
   }
   .status-msg {
-    margin-top: 14px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 13.5px;
+    margin-top: 18px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 15px;
     display: none;
+    line-height: 1.5;
   }
   .status-msg.show { display: block; }
   .status-msg.success {
@@ -406,28 +429,28 @@
 
   /* Hidden auto-resolved fields, shown as small chips when populated */
   .resolved-info {
-    margin-top: 8px;
-    padding: 8px 12px;
-    background: rgba(139, 111, 247, 0.08);
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: rgba(139, 111, 247, 0.10);
     border-left: 3px solid var(--xfinity-purple-light);
-    border-radius: 4px;
-    font-size: 11.5px;
+    border-radius: 6px;
+    font-size: 13px;
     color: var(--text-secondary);
     display: none;
-    line-height: 1.55;
+    line-height: 1.65;
   }
   .resolved-info.show { display: block; }
   .resolved-info code {
     color: var(--xfinity-purple-light);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
+    font-size: 12.5px;
   }
 
   /* Footer */
   .footer {
     text-align: center;
-    margin-top: 30px;
-    font-size: 11px;
+    margin-top: 44px;
+    font-size: 12px;
     color: var(--text-muted);
     letter-spacing: 0.4px;
   }
@@ -1396,14 +1419,6 @@
         <tr><td style="padding:10px 18px 0 18px;">${grid}</td></tr>`;
     }
 
-    const submittedBy = d.interviewer_name && d.interviewer_email
-      ? `${d.interviewer_name} (${d.interviewer_email})`
-      : (d.interviewer_name || d.interviewer_email);
-    const storeMgr = d.store_manager_name && d.store_manager_email
-      ? `${d.store_manager_name} <${d.store_manager_email}>`
-      : (d.store_manager_name || d.store_manager_email);
-    const submitterBlock = row('Submitted By', submittedBy);
-
     return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Interview Guide — ${esc(candidate)}</title></head>
 <body style="margin:0;padding:0;background:${BG_PAGE};font-family:${FONT};">
@@ -1418,7 +1433,6 @@
           <span style="background:${recBg};padding:8px 16px;border-radius:999px;font-family:${FONT};font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.8px;">${esc(recLabel)}</span>
         </div>
       </td></tr>
-      ${section('Submitter & Routing', submitterBlock + row('Store Manager', storeMgr) + row('District Manager', d.district_manager_email))}
       ${section('Pre-Hire Compliance', compliance)}
       ${section('Motivation & Intent', motivation)}
       ${section('Sales Mindset & Scenarios', mindset)}
