@@ -516,6 +516,7 @@
           <input type="hidden" id="store_manager_name" name="store_manager_name" />
           <input type="hidden" id="store_manager_email" name="store_manager_email" />
           <input type="hidden" id="district_manager_email" name="district_manager_email" />
+          <input type="hidden" id="asm_email" name="asm_email" />
 
         </div>
       </div>
@@ -1003,10 +1004,12 @@
     const mgrEmail = directory.storeManagers?.[store] || '';
     const mgrName = directory.storeManagerNames?.[store] || '';
     const dmEmail = directory.storeDMs?.[store] || '';
+    const asmEmail = directory.storeAMs?.[store] || '';
 
     document.getElementById('store_manager_name').value = mgrName;
     document.getElementById('store_manager_email').value = mgrEmail;
     document.getElementById('district_manager_email').value = dmEmail;
+    document.getElementById('asm_email').value = asmEmail;
 
     const info = document.getElementById('resolved-info');
     if (store) {
@@ -1230,6 +1233,7 @@
       store_manager_name: document.getElementById('store_manager_name').value || '',
       store_manager_email: document.getElementById('store_manager_email').value || '',
       district_manager_email: document.getElementById('district_manager_email').value || '',
+      asm_email: document.getElementById('asm_email').value || '',
       schedule_understanding: get('schedule_understanding'),
       prior_experience: get('prior_experience'),
       transportation: get('transportation'),
@@ -1463,6 +1467,7 @@
       storeManagerEmail: d.store_manager_email,
       storeManagerName: d.store_manager_name,
       storeDMEmail: d.district_manager_email,
+      storeASMEmail: d.asm_email,
       store: d.store,
       interviewerName: d.interviewer_name,
       interviewerEmail: d.interviewer_email,
